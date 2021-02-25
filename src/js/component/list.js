@@ -7,7 +7,7 @@ export function List() {
 	const [task, setTask] = useState([]);
 	const [userInput, setInput] = useState("");
 	useEffect(() => {
-		fetch("https://assets.breatheco.de/apis/fake/todos/user/99lalo")
+		fetch("https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos")
 			.then(function(response) {
 				if (!response.ok) {
 					throw Error(response.statusText);
@@ -23,17 +23,13 @@ export function List() {
 				console.log("Looks like there was a problem: \n", error);
 			});
 	}, []);
-	const handleRemoval = index => {
-		const newList = task.filter((task, taskIndex) => index != taskIndex);
-		setTask(newList);
-		fetch("https://assets.breatheco.de/apis/fake/todos/user/99lalo", {
-			method: "PUT",
-			body: JSON.stringify(newList),
-			// label, done
-			headers: {
-				"Content-Type": "application/json"
+	const handleRemoval = taskid => {
+		fetch(
+			`https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos/${taskid}`,
+			{
+				method: "DELETE"
 			}
-		})
+		)
 			.then(response => {
 				if (!response.ok) {
 					throw Error(response.statusText);
@@ -42,7 +38,9 @@ export function List() {
 			})
 			.then(response => {
 				console.log("Success:", response);
-				fetch("https://assets.breatheco.de/apis/fake/todos/user/99lalo")
+				fetch(
+					"https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos"
+				)
 					.then(function(response) {
 						if (!response.ok) {
 							throw Error(response.statusText);
@@ -63,16 +61,20 @@ export function List() {
 	};
 	const handleKeyDown = e => {
 		if (e.keyCode == 13 && userInput != "") {
-			setTask(task.concat({ label: userInput, done: false }));
-			fetch("https://assets.breatheco.de/apis/fake/todos/user/99lalo", {
-				method: "PUT",
-				body: JSON.stringify(
-					task.concat({ label: userInput, done: false })
-				),
-				headers: {
-					"Content-Type": "application/json"
+			fetch(
+				"https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						label: userInput,
+						done: false,
+						user: "Mikey"
+					}),
+					headers: {
+						"Content-Type": "application/json"
+					}
 				}
-			})
+			)
 				.then(response => {
 					if (!response.ok) {
 						throw Error(response.statusText);
@@ -82,7 +84,7 @@ export function List() {
 				.then(response => {
 					console.log("Success:", response);
 					fetch(
-						"https://assets.breatheco.de/apis/fake/todos/user/99lalo"
+						"https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos"
 					)
 						.then(function(response) {
 							if (!response.ok) {
@@ -103,6 +105,48 @@ export function List() {
 				.catch(error => console.error("Error:", error));
 			setInput("");
 		}
+	};
+	const handleDone = taskid => {
+		fetch(
+			`https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos/${taskid}`,
+			{
+				method: "PUT",
+				body: JSON.stringify({
+					done: true
+				}),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			}
+		)
+			.then(response => {
+				if (!response.ok) {
+					throw Error(response.statusText);
+				}
+				return response.json();
+			})
+			.then(response => {
+				console.log("Success:", response);
+				fetch(
+					"https://3000-chocolate-beetle-xhfmdj1t.ws-us03.gitpod.io/todos"
+				)
+					.then(function(response) {
+						if (!response.ok) {
+							throw Error(response.statusText);
+						}
+						return response.json(); // Read the response as json.
+					})
+					.then(function(responseAsJson) {
+						setTask(responseAsJson); // Set json into list
+					})
+					.catch(function(error) {
+						console.log(
+							"Looks like there was a problem: \n",
+							error
+						);
+					});
+			})
+			.catch(error => console.error("Error:", error));
 	};
 	return (
 		<div className="container">
@@ -129,13 +173,25 @@ export function List() {
 							onMouseEnter={() => setIsShown(t.label)}
 							onMouseLeave={() => setIsShown(false)}>
 							{t.label}
+							{t.done == true && "(done)"}
 							{isShown == t.label && (
 								<span
 									style={{ float: "right", color: "red" }}
-									onClick={() => handleRemoval(index)}>
+									onClick={() => handleRemoval(t.id)}>
 									X
 								</span>
 							)}
+							{isShown == t.label &&
+								t.done != true && (
+									<i
+										className="fas fa-check"
+										style={{
+											float: "right",
+											color: "green"
+										}}
+										onClick={() => handleDone(t.id)}
+									/>
+								)}
 						</li>
 					))
 				)}
